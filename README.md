@@ -18,12 +18,12 @@ This project is an advanced, 100% local Retrieval-Augmented Generation (RAG) pip
 ## 🚀 How to Run
 1. Clone this repository.
 2. Install the required Python dependencies:
-   bash
-   pip install langchain langchain-ollama langgraph pymupdf Pillow chromadb
+   '''bash
+   pip install langchain langchain-ollama langgraph pymupdf Pillow chromadb'''
 4. Ensure you have Ollama installed and running. Pull the necessary local models:
-   Bash
+   '''Bash
    ollama pull qwen2.5vl:3b   # The Vision OCR Model
    ollama pull qwen3:4b       # The Agentic Reasoning Model
-   ollama pull nomic-embed-text # The Embedding Model
+   ollama pull nomic-embed-text # The Embedding Model'''
 6. Place your target PDF in the project directory.
 7. Open the Jupyter Notebook (.ipynb) in VS Code, ensure your Python environment is selected, and run the cells!
