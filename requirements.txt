@@ -1,0 +1,8 @@
+streamlit
+pymupdf
+Pillow
+google-generativeai
+llama-index-core
+llama-index-llms-openai-like
+llama-index-embeddings-gemini
+python-dotenv

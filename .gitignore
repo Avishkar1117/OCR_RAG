@@ -1,0 +1,5 @@
+.env
+ocr_cache_*.md
+index_store_*/
+__pycache__/
+*.pyc
