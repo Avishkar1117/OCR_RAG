@@ -1,30 +1,29 @@
 # PDF Chat
 
-A fully offline RAG (Retrieval-Augmented Generation) application that lets you chat with any PDF document. All processing runs locally on your machine using Ollama — no API keys, no internet required after setup, no data leaves your device.
+A lightweight, cloud-powered RAG (Retrieval-Augmented Generation) application that lets you chat with any PDF document using OCR. This app uses Google's Gemini API for high-quality OCR and embeddings, and GitHub Models for flexible chat model like GPT-4o.
 
 ## How it works
 
-The pipeline runs in three sequential stages, each designed to stay within tight RAM budgets by unloading models from memory as soon as they are no longer needed.
+The pipeline runs in three sequential stages:
 
-Stage 1 — OCR: Each page of the uploaded PDF is rendered as an image and passed to a local vision model (qwen2.5vl) which extracts text and tables as clean Markdown. Pages are cached to disk so re-uploads skip this step entirely.
+**Stage 1 — OCR:** Each page of the uploaded PDF is rendered as an image using PyMuPDF and passed to a Gemini  model (here, `gemini-2.5-flash-lite`). The AI extracts text and tables as clean Markdown. Pages are cached to disk locally so re-uploads skip this step entirely.
 
-Stage 2 — Indexing: The extracted Markdown is chunked, embedded using nomic-embed-text, and stored in a local vector index. The index is persisted to disk per document so it only needs to be built once.
+**Stage 2 — Indexing:** The extracted Markdown is chunked, embedded using Google's `gemini-embedding-001` model, and stored in a local vector index via LlamaIndex. The index is persisted to disk per document so it only needs to be built once.
 
-Stage 3 — Chat: A local LLM (qwen3) answers questions using only the retrieved document context. Conversation history is maintained within the session.
+**Stage 3 — Chat:** A cloud LLM routed through GitHub Models answers questions using only the retrieved document context using `gpt-40`. Conversation history is maintained within the session.
 
 ## Requirements
 
-- Windows 10/11, macOS, or Linux
-- Python 3.9 or higher
-- Ollama installed — https://ollama.com/download
-- 16GB RAM minimum (models load and unload sequentially to stay within budget)
+- Python 3.10 or higher
+- A [Google AI Studio](https://aistudio.google.com/) API Key (Free tier works great)
+- A [GitHub Personal Access Token](https://github.com/settings/tokens) (Classic or Fine-grained) with access to GitHub Models.
 
 ## Setup
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/pdf-chat.git
+git clone [https://github.com/your-username/pdf-chat.git](https://github.com/your-username/pdf-chat.git)
 cd pdf-chat
 ```
 
@@ -34,15 +33,11 @@ cd pdf-chat
 pip install -r requirements.txt
 ```
 
-### 3. Pull the required Ollama models
+### 3. Configure Environment Variables
+Create a file named .env in the root directory of the project and add your API keys:
 
-Run these once. They download to your local Ollama model store and are reused across sessions.
-
-```bash
-ollama pull qwen2.5vl:3b
-ollama pull qwen3:4b
-ollama pull nomic-embed-text
-```
+GEMINI_API_KEY=your_google_gemini_api_key_here
+GITHUB_TOKEN=your_github_personal_access_token_here
 
 ### 4. Run the app
 
@@ -63,14 +58,14 @@ On subsequent uploads of the same PDF, the app loads from cache and skips OCR an
 
 ## Performance notes
 
-First run on a new PDF takes 30 to 90 seconds depending on page count and hardware. Re-uploads are near instant. On 16GB RAM systems, avoid running memory-heavy applications alongside the app during the OCR stage.
+First run on a new PDF takes 30 to 90 seconds depending on page count and hardware. Re-uploads are near instant.
 
 ## Project structure
 
 ```
 pdf-chat/
 ├── app.py               # Main Streamlit application
-├── requirements.txt     # Python dependencies
+├── .env                 # API Keys
 ├── README.md
 ├── ocr_cache_*.md       # Auto-generated OCR cache files (gitignored)
 └── index_store_*/       # Auto-generated vector index folders (gitignored)
@@ -87,13 +82,30 @@ __pycache__/
 *.pyc
 ```
 
-## Models used
+## Models used & Architecture History
 
-| Model | Purpose | Size on disk |
-|---|---|---|
-| qwen2.5vl:3b | Vision OCR — extracts text from PDF page images | ~3.5 GB |
-| qwen3:4b | LLM — answers questions from retrieved context | ~3.5 GB |
-| nomic-embed-text | Embeddings — converts text chunks to vectors | ~0.5 GB |
+This project was built to be flexible. It has been successfully tested using both a lightweight cloud-powered pipeline and a fully offline local pipeline. Both combinations work effectively depending on your privacy needs and hardware capabilities.
+
+### Current Setup: Cloud-Powered (Fast & Lightweight)
+The default configuration uses cloud APIs to offload the heavy lifting, making it runnable on almost any machine:
+* **Vision OCR & Embeddings (Google Gemini):** Uses `gemini-2.5-flash-lite` for incredibly fast and accurate text/table extraction from images, and `gemini-embedding-001` for high-dimensional semantic search.
+* **Chat LLM (GitHub Models):** Routes through GitHub's inference API, allowing you the use of model `gpt-4o`.
+
+### Alternative Setup: Fully Local (Privacy-First via Ollama)
+The app was originally designed to run 100% locally using Ollama, ensuring no data ever leaves the device. If adapting the code back to local, the following stack was used:
+* **Vision OCR:** `qwen2.5vl:3b` 
+* **Chat LLM:** `qwen3:4b` 
+* **Embeddings:** `nomic-embed-text`
+
+**Hardware Restrictions for Local Execution:** Running the fully local Ollama pipeline requires a **minimum of 16GB RAM**. Because vision and chat models are highly memory-intensive, the pipeline is designed to load and unload these models sequentially. For example, the `qwen2.5vl` model must be completely purged from memory after the OCR stage finishes before the `qwen3` chat model can be loaded to answer questions.
+
+## Output for current models
+These are the outputs from streamlit UI
+
+<img width="926" height="1197" alt="Screenshot 2026-03-28 194023" src="https://github.com/user-attachments/assets/b2754ae9-ff90-451e-bf53-2b5efbca80c6" />
+
+<img width="916" height="1194" alt="Screenshot 2026-03-28 194051" src="https://github.com/user-attachments/assets/0510eaac-7703-4063-8b60-41e88bef5b68" />
+
 
 ## Limitations
 
