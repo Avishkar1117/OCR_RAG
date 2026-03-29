@@ -1,4 +1,4 @@
-import os, hashlib, base64, time
+import os, hashlib, time
 import fitz
 import streamlit as st
 import google.generativeai as genai
@@ -69,14 +69,13 @@ def run_ocr(pdf_bytes, file_hash):
         with open(cache, "r", encoding="utf-8", errors="ignore") as f:
             return f.read(), True
 
-    pages = [(i, img_bytes) for i, img_bytes, _ in pdf_to_images(pdf_bytes)]
-    total = len(pages)
+    total = None
     results = {}
 
     progress = st.progress(0, text="Starting OCR...")
     
-    for p in pages:
-        i, text = ocr_page(p)
+    for i, img_bytes, total in pdf_to_images(pdf_bytes):
+        i, text = ocr_page((i, img_bytes))
         results[i] = text
         progress.progress(len(results) / total, text=f"OCR: page {i+1} of {total}")
 
